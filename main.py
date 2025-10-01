@@ -43,9 +43,6 @@ def get_system_status() -> Dict[str, Union[float, str]]:
         "timestamp" : time.time()
     }
 
-    # Import the system status function from the metrics.py module.
-from metrics import get_system_status
-
 app = FastAPI(
     title = "System Monitor API with Python.",
     version="1.0.0",
@@ -61,5 +58,5 @@ def system_status_endpoint() -> Dict[str, Union[float, str]]:
         A dictionary containing CPU, Memory, and Disk usage percentages, etc.
     """
 
-    # Delegate teh work to the function defined in the separate utility module
+    # Delegate the work to the function defined in the separate utility module
     return get_system_status()
