@@ -1,8 +1,24 @@
 from typing import Union, Dict
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import psutil 
 import time
 import socket
+
+app = FastAPI(
+    title="System Monitor API with Python.",
+    version="1.0.0",
+    description="API to retrieve core system resource usage."
+)
+
+# Allow frontend (nginx) to call backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # you can restrict to your frontend IP/domain later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_system_status() -> Dict[str, Union[float, str]]:
     """
