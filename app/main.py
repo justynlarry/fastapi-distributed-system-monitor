@@ -49,7 +49,7 @@ app = FastAPI(
     description="API to retrieve core system resource usage."
 )
 
-@app.get("/system-status", summary="Get current CPU, Memory, and Disk Usage")
+@app.get("/metrics", summary="Get current CPU, Memory, and Disk Usage")
 def system_status_endpoint() -> Dict[str, Union[float, str]]:
     """
     Retrieves system status metrics by calling the dedicated utility function.
