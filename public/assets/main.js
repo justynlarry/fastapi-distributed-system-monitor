@@ -16,7 +16,7 @@ const GREEN = "rgb(100,255,100)";
 const BLUE = "rgb(0,47,167)";
 const RED = "rgb(255,0,0)";
 
-// API endpoints
+// API endpoints (now using /metrics instead of /system-status)
 const API_URL_GOLD = "http://100.121.87.54:8000/metrics";
 const API_URL_BLUE = "http://100.79.53.58:8000/metrics";
 
@@ -30,18 +30,21 @@ const TEXT_PADDING_Y = -5;
 async function fetchMetrics(url) {
     try {
         const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const metrics = await res.json();
         return {
             cpu: metrics.cpu_usage_percent || 0,
             ram: metrics.memory_usage_percent || 0,
             disk: metrics.disk_usage_percent || 0,
-            hostname: metrics.hostname || "Error",
+            hostname: metrics.hostname || "Unknown",
             statusColor: WHITE
         };
     } catch (err) {
         console.error(`Error fetching ${url}:`, err);
         return {
-            cpu: 0, ram: 0, disk: 0,
+            cpu: 0,
+            ram: 0,
+            disk: 0,
             hostname: "Error",
             statusColor: RED
         };
