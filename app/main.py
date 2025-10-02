@@ -11,6 +11,10 @@ app = FastAPI(
     description="API to retrieve core system resource usage."
 )
 
+origins = [
+    "http://100.120.87.36"
+]
+
 # Allow frontend (nginx) to call backend
 app.add_middleware(
     CORSMiddleware,
