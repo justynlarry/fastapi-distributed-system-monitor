@@ -5,5 +5,5 @@ services:
     ports:
       - "8000:8000"
     restart: always
-    environment:
-      - HOST_NAME=${HOSTNAME}
+    volumes:
+      - /etc/hostname:/etc/host_hostname:ro

@@ -124,7 +124,7 @@ function drawMetric(baseX, yOffset, color, label, percent, hostname, statusColor
 // Main loop
 async function mainLoop() {
     // Clear screen
-    ctx.fillStyle = "rgba(0,0,0,0.3";
+    ctx.fillStyle = "rgba(0,0,0,0.6";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Fetch metrics, passing the last good data
