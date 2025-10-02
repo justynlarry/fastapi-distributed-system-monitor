@@ -17,8 +17,8 @@ const BLUE = "rgb(0,47,167)";
 const RED = "rgb(255,0,0)";
 
 // API endpoints
-const API_URL_GOLD = "http://100.121.87.54:8000/system-status";
-const API_URL_BLUE = "http://100.79.53.58:8000/system-status";
+const API_URL_GOLD = "http://100.121.87.54:8000/metrics";
+const API_URL_BLUE = "http://100.79.53.58:8000/metrics";
 
 // Layout constants (percent-based)
 const LINE_DIAGONAL_LENGTH = 15;
