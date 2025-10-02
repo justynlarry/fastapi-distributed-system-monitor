@@ -1,6 +1,13 @@
-// --- Setup ---
 const canvas = document.getElementById("screen");
 const ctx = canvas.getContext("2d");
+
+// Resize canvas dynamically
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
 // Colors
 const WHITE = "rgb(255,255,255)";
@@ -13,19 +20,16 @@ const RED = "rgb(255,0,0)";
 const API_URL_GOLD = "http://100.121.87.54:8000/system-status";
 const API_URL_BLUE = "http://100.79.53.58:8000/system-status";
 
-// Layout constants
+// Layout constants (percent-based)
 const LINE_DIAGONAL_LENGTH = 15;
 const LINE_HORIZONTAL_LENGTH = 25;
 const TEXT_PADDING_X = 10;
 const TEXT_PADDING_Y = -5;
-const BASE_X_GOLD = 100;
-const BASE_X_BLUE = 800;
-const Y_START = 1000;
 
-// --- Utility: Fetch metrics ---
+// Utility: Fetch metrics
 async function fetchMetrics(url) {
     try {
-        const res = await fetch(url, { timeout: 2000 });
+        const res = await fetch(url);
         const metrics = await res.json();
         return {
             cpu: metrics.cpu_usage_percent || 0,
@@ -44,20 +48,23 @@ async function fetchMetrics(url) {
     }
 }
 
-// --- Draw one metric ---
+// Draw one metric
 function drawMetric(baseX, yOffset, color, label, percent, hostname) {
+    const Y_START = canvas.height * 0.9; // place near bottom
+
+    // Use relative positioning
     const xPos = baseX + yOffset;
-    const yPos = Y_START - (percent * 4);
+    const yPos = Y_START - (percent * (canvas.height / 300)); // scale with screen
 
-    const radius = Math.max(5, Math.floor(5 + percent * 1.5));
+    const radius = Math.max(5, Math.floor(5 + percent * 0.5));
 
-    // Draw circle
+    // Circle
     ctx.beginPath();
     ctx.arc(xPos, yPos, radius, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
 
-    // Styled line
+    // Line
     const lineStartX = xPos + radius;
     const lineStartY = yPos;
     const lineDiagEndX = lineStartX + LINE_DIAGONAL_LENGTH;
@@ -75,33 +82,35 @@ function drawMetric(baseX, yOffset, color, label, percent, hostname) {
 
     // Text
     ctx.fillStyle = color;
-    ctx.font = "14px Arial";
+    ctx.font = `${Math.floor(canvas.width * 0.007)}px Arial`; // scale font
     ctx.fillText(`${hostname}`, lineHorizEndX + TEXT_PADDING_X, lineHorizEndY + TEXT_PADDING_Y);
     ctx.fillText(`${label}: ${percent.toFixed(1)}%`, lineHorizEndX + TEXT_PADDING_X, lineHorizEndY + 16);
 }
 
-// --- Main loop ---
+// Main loop
 async function mainLoop() {
     // Clear screen
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Fetch data
+    // Fetch metrics
     const [metricsGold, metricsBlue] = await Promise.all([
         fetchMetrics(API_URL_GOLD),
         fetchMetrics(API_URL_BLUE)
     ]);
 
-    // Draw GOLD
+    // GOLD server (left side ~20% of width)
+    const BASE_X_GOLD = canvas.width * 0.2;
     drawMetric(BASE_X_GOLD, 0, GOLD, "CPU", metricsGold.cpu, metricsGold.hostname);
-    drawMetric(BASE_X_GOLD, 300, GREEN, "RAM", metricsGold.ram, metricsGold.hostname);
-    drawMetric(BASE_X_GOLD, 500, WHITE, "DISK", metricsGold.disk, metricsGold.hostname);
+    drawMetric(BASE_X_GOLD, canvas.width * 0.15, GREEN, "RAM", metricsGold.ram, metricsGold.hostname);
+    drawMetric(BASE_X_GOLD, canvas.width * 0.3, WHITE, "DISK", metricsGold.disk, metricsGold.hostname);
 
-    // Draw BLUE
-    drawMetric(BASE_X_BLUE, 100, BLUE, "CPU", metricsBlue.cpu, metricsBlue.hostname);
-    drawMetric(BASE_X_BLUE, 400, GREEN, "RAM", metricsBlue.ram, metricsBlue.hostname);
-    drawMetric(BASE_X_BLUE, 600, WHITE, "DISK", metricsBlue.disk, metricsBlue.hostname);
+    // BLUE server (right side ~60% of width)
+    const BASE_X_BLUE = canvas.width * 0.6;
+    drawMetric(BASE_X_BLUE, 0, BLUE, "CPU", metricsBlue.cpu, metricsBlue.hostname);
+    drawMetric(BASE_X_BLUE, canvas.width * 0.2, GREEN, "RAM", metricsBlue.ram, metricsBlue.hostname);
+    drawMetric(BASE_X_BLUE, canvas.width * 0.35, WHITE, "DISK", metricsBlue.disk, metricsBlue.hostname);
 }
 
-// Run at 2 FPS (like clock.tick(2) in pygame)
+// Run at ~2 FPS (500ms)
 setInterval(mainLoop, 500);
