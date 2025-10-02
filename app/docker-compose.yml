@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   fastapi-monitor:
     build: .
@@ -7,3 +5,5 @@ services:
     ports:
       - "8000:8000"
     restart: always
+    environment:
+      - HOST_NAME=${HOSTNAME}

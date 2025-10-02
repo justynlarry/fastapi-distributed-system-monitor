@@ -4,7 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import psutil 
 import time
 import socket
+import os
 
+server_hostname = os.getenv("HOST_HOSTNAME", socket.gethostname())
 app = FastAPI(
     title="System Monitor API with Python.",
     version="1.0.0",
@@ -35,7 +37,7 @@ def get_system_status() -> Dict[str, Union[float, str]]:
     # 2.  CPU Usage
     # The interval=1 causes psutil to block for 1 second to calculate the average
     # CPU usage since the last call.
-    cpu_usage = psutil.cpu_percent(interval=1, percpu=False)
+    cpu_usage = psutil.cpu_percent(interval=.1, percpu=False)
 
     # 3.  Memory Usage 
     mem_avail = psutil.virtual_memory()
@@ -62,12 +64,6 @@ def get_system_status() -> Dict[str, Union[float, str]]:
         "disk_mount_point" : disk_mount,
         "timestamp" : time.time()
     }
-
-app = FastAPI(
-    title = "System Monitor API with Python.",
-    version="1.0.0",
-    description="API to retrieve core system resource usage."
-)
 
 @app.get("/metrics", summary="Get current CPU, Memory, and Disk Usage")
 def system_status_endpoint() -> Dict[str, Union[float, str]]:
