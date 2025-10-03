@@ -1,78 +1,96 @@
 from typing import Union, Dict
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import psutil 
+import psutil
 import time
 import socket
 import os
+from pathlib import Path
 
-server_hostname = os.getenv("HOST_HOSTNAME", socket.gethostname())
 app = FastAPI(
     title="System Monitor API with Python.",
     version="1.0.0",
     description="API to retrieve core system resource usage."
 )
 
+# simple origins placeholder (you can tighten this later)
 origins = [
     "http://100.120.87.36"
 ]
 
-# Allow frontend (nginx) to call backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # you can restrict to your frontend IP/domain later
+    allow_origins=["*"],  # tighten later if desired
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+def detect_host_hostname() -> str:
+    """
+    Determine the 'real' host hostname with this priority:
+      1. A mounted file at /etc/host_hostname (recommended - mount host's /etc/hostname into the container)
+      2. Environment variable HOST_HOSTNAME
+      3. /etc/hostname (may be the container's hostname)
+      4. socket.gethostname() fallback
+    """
+    # 1) mounted host hostname file (what we'll map from host)
+    host_file = Path("/etc/host_hostname")
+    if host_file.exists():
+        try:
+            text = host_file.read_text().strip()
+            if text:
+                return text
+        except Exception:
+            pass
+
+    # 2) environment variable
+    env_host = os.getenv("HOST_HOSTNAME")
+    if env_host:
+        return env_host
+
+    # 3) try /etc/hostname (might still be container's hostname)
+    etc_hostname = Path("/etc/hostname")
+    if etc_hostname.exists():
+        try:
+            text = etc_hostname.read_text().strip()
+            if text:
+                return text
+        except Exception:
+            pass
+
+    # 4) fallback
+    return socket.gethostname()
+
+# resolve once at startup (cheap). If you prefer always-current value, call detect_host_hostname() inside get_system_status().
+SERVER_HOSTNAME = detect_host_hostname()
+
+
 def get_system_status() -> Dict[str, Union[float, str]]:
     """
-    Calculates and returns the current average CPU usage, memory usage, and
-    root disk usage percentage using the psutil library.
+    Calculates and returns the current CPU/memory/disk usage.
     """
-    # 1. Get hostname of machine running metrics.py
-    server_hostname = socket.gethostname()
-
-    # 2.  CPU Usage
-    # The interval=1 causes psutil to block for 1 second to calculate the average
-    # CPU usage since the last call.
-    cpu_usage = psutil.cpu_percent(interval=.1, percpu=False)
-
-    # 3.  Memory Usage 
+    cpu_usage = psutil.cpu_percent(interval=0.1, percpu=False)
     mem_avail = psutil.virtual_memory()
-    # Acces the 'percent' attribute directly.
     memory_percent = mem_avail.percent
 
-    # 4.  Disk Usage (Root Disk)
     try:
-        # psutil.disk_usage('/') works on Linux/MacOS
         disk_used = psutil.disk_usage('/')
         disk_percent = disk_used.percent
         disk_mount = '/'
     except Exception as e:
-        # Fallback if the root disk access fails
         disk_percent = -1.0
         disk_mount = "Error accessing disk: " + str(e)
 
-    # Return all the collected data as a JSON object
     return {
-        "hostname" : server_hostname,
-        "cpu_usage_percent" : cpu_usage,
-        "memory_usage_percent" : memory_percent,
-        "disk_usage_percent" : disk_percent,
-        "disk_mount_point" : disk_mount,
-        "timestamp" : time.time()
+        "hostname": SERVER_HOSTNAME,
+        "cpu_usage_percent": cpu_usage,
+        "memory_usage_percent": memory_percent,
+        "disk_usage_percent": disk_percent,
+        "disk_mount_point": disk_mount,
+        "timestamp": time.time()
     }
 
 @app.get("/metrics", summary="Get current CPU, Memory, and Disk Usage")
 def system_status_endpoint() -> Dict[str, Union[float, str]]:
-    """
-    Retrieves system status metrics by calling the dedicated utility function.
-
-    Returns:
-        A dictionary containing CPU, Memory, and Disk usage percentages, etc.
-    """
-
-    # Delegate the work to the function defined in the separate utility module
     return get_system_status()
