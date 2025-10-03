@@ -12,3 +12,23 @@ canvas {
     width: 100vw;
     height: 100vh;
 }
+
+.server {
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    min-width: 120px;
+    transition: opacity 0.3s ease-in-out;
+    /* shorter fade */
+}
+
+.hostname {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.metric.fade {
+    opacity: 0.6;
+}

@@ -155,4 +155,4 @@ async function mainLoop() {
 // Run at 1 FPS (1000ms is standard, but you changed it to 5000ms)
 // We'll stick with your 5000ms for now, but 1000ms is usually fine after all fixes.
 // If it still blinks, ensure you check your firewalls!
-setInterval(mainLoop, 10000);
+setInterval(mainLoop, 6000);
